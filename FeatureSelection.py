@@ -71,3 +71,24 @@ def tryOut(features, n, features_in=[]):
         index += 1
         
     return pd.DataFrame(r2s)
+
+"""
+    Adding polynomials to the features
+"""
+def polynomial_options(df, features, y_feature, threshhold=0.011):
+
+    for feature in features:
+        df[feature + '^2'] = df[feature] ** 2
+        df[feature + '^3'] = df[feature] ** 3
+        df[feature + '^4'] = df[feature] ** 4
+
+        relations = df.corr()[y_feature]
+        base = relations[feature]
+
+        if not (relations[feature + '^4'] - base > 0.11 or relations[feature + '^4'] - relations[feature + '^3'] > threshhold  or relations[feature + '^4'] - relations[feature + '^2'] > threshhold):
+            df.drop(feature + '^4', axis=1)
+        if not (relations[feature + '^3'] - base > 0.11 or relations[feature + '^3'] - relations[feature + '^2'] > threshhold):
+            df.drop(feature + '^3', axis=1)
+        if not (relations[feature + '^2'] - base > threshhold):
+            df.drop(feature + '^2', axis=1)
+    return df
