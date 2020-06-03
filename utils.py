@@ -1,12 +1,57 @@
 import numpy as np
 import pandas as pd
-y_feature='SalePrice'
+
 """
     Loads the data into the variables
 """
-def load_house_data(fileName="train.csv", base_path="./dataset/"):
+def load_data(fileName="train.csv", base_path="./dataset/"):
     path = base_path + fileName
     return pd.read_csv(path)
+
+""" Loads and formats the benchmark data"""
+def load_bench_data():
+    bench = load_data('bench-mark.csv' ,'./')
+    bench['Id'] = bench['Id'] - bench.shape[0] - 1 
+    bench = bench.set_index('Id')
+
+    return bench
+
+""" 
+    Retrieve Data:
+    gets the different datasets and returns the splitted data based on
+    their relative attributes in a dictionary
+
+    further improvement:
+    The datatypes within data could be identified and then
+    classified based on the available data types
+ """
+def retrieve_data():
+    # Load Data
+    test = load_data(fileName='test.csv')
+    train = load_data(fileName='train.csv')
+
+    # Categorical Data
+    categorical_train = train.select_dtypes('object')
+    numerical_train = train.select_dtypes(['float64', 'int64'])
+    # Numerical Data
+    categorical_test = test.select_dtypes('object')
+    numerical_test = test.select_dtypes(['float64', 'int64'])
+
+    # Missing data 
+    missing_cat_train = categorical_train.columns[categorical_train.isna().any()].tolist()
+    missing_cat_test = categorical_test.columns[categorical_test.isna().any()].tolist()
+    missing_num_train = numerical_train.columns[numerical_train.isna().any()].tolist()
+    missing_num_test = numerical_test.columns[numerical_test.isna().any()].tolist()
+    
+    # Dictionary containing the needed information
+    dictionary = {
+        'train_cat': categorical_train, 'test_cat': categorical_test, 
+        'train_num': numerical_train, 'test_num': numerical_test,
+        'train_cat_missing': missing_cat_train, 'train_num_missing': missing_num_train,
+        'test_cat_missing': missing_cat_train, 'test_num_missing': missing_num_test
+    }
+    # Return dictionary
+    return dictionary
 
 """
     Preprocesses the data so it would be ready to fit into the model
