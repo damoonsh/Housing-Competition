@@ -76,12 +76,11 @@ def tryOut(features, n, train, features_in=[], y_feature='SalePrice'):
 """
     Adding polynomials to the features
 """
-def polynomial_options(df, features, threshhold=0.011):
+def polynomial_options(df, features, max_exponent=3,threshhold=0.011):
     for feature in features:
-        # Get the exponent 2, 3, 4 of the features
-        df[feature + '^2'] = df[feature] ** 2
-        df[feature + '^3'] = df[feature] ** 3
-        df[feature + '^4'] = df[feature] ** 4
+        for exponent in range(1,max_exponent+1):
+            # Get the exponent 2, 3, 4 of the features
+            df[feature + '^2'] = df[feature] ** exponent
         
     # Returning the new df
     return df
