@@ -1,4 +1,5 @@
-
+import pandas as pd
+import numpy as np
 """
     Functions below are the ones used for feature selection
 """
@@ -33,7 +34,7 @@ def f(l, k):
     This function tries out the different combinations and 
     gives out the performance of each of them did.
 """
-def tryOut(features, n, features_in=[]):
+def tryOut(features, n, train, features_in=[], y_feature='SalePrice'):
     # Getting the various feature combinations
     combs = f(features, n)
     # Setting the initial index and dict to null
@@ -75,20 +76,12 @@ def tryOut(features, n, features_in=[]):
 """
     Adding polynomials to the features
 """
-def polynomial_options(df, features, y_feature, threshhold=0.011):
-
+def polynomial_options(df, features, threshhold=0.011):
     for feature in features:
+        # Get the exponent 2, 3, 4 of the features
         df[feature + '^2'] = df[feature] ** 2
         df[feature + '^3'] = df[feature] ** 3
         df[feature + '^4'] = df[feature] ** 4
-
-        relations = df.corr()[y_feature]
-        base = relations[feature]
-
-        if not (relations[feature + '^4'] - base > 0.11 or relations[feature + '^4'] - relations[feature + '^3'] > threshhold  or relations[feature + '^4'] - relations[feature + '^2'] > threshhold):
-            df.drop(feature + '^4', axis=1)
-        if not (relations[feature + '^3'] - base > 0.11 or relations[feature + '^3'] - relations[feature + '^2'] > threshhold):
-            df.drop(feature + '^3', axis=1)
-        if not (relations[feature + '^2'] - base > threshhold):
-            df.drop(feature + '^2', axis=1)
+        
+    # Returning the new df
     return df

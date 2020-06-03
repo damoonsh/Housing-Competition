@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-
+y_feature='SalePrice'
 """
     Loads the data into the variables
 """
@@ -32,7 +32,6 @@ def FeatureSelection(features_range=10, choice_number=6, handPickedFeatures = []
     pass
 
 """
-    ######################################################################
     helper functions
 """
 from sklearn.neighbors import KNeighborsClassifier
@@ -45,7 +44,7 @@ def getNaIndexes(feature, df):
     Divides the DataFrame into two parts:
     with na's and without na's
 """
-def divideByNA(feature, l, df, y_feature):
+def divideByNA(feature, l, df, y_feature='SalePrice'):
     X, y, X_test = [], [], []
     
     for i in range(0, df.shape[0]):
@@ -54,7 +53,7 @@ def divideByNA(feature, l, df, y_feature):
         else:
             X.append(df.iloc[i][feature])
             y.append(df.iloc[i][y_feature])
-            
+
     return np.reshape(X, (-1, 1)),  np.reshape(y, (-1, 1)),  np.reshape(X_test, (-1, 1))
 
 """
@@ -85,3 +84,12 @@ def fillNaWithKNN(feature, df, y_feature):
     
     return df[feature]
 
+"""
+    Impute using KNN
+"""
+def imputeKNN(data, feature_list, y_feature='SalePrice'):
+    # Impute each feature independently 
+    for feature in feature_list:
+        data[feature] = fillNaWithKNN(feature, data, y_feature)
+
+    return data
