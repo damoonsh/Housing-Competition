@@ -45,14 +45,20 @@ def retrieve_data():
     
     # Dictionary containing the needed information
     dictionary = {
+        'train': train, 'test': test,
         'train_cat': categorical_train, 'test_cat': categorical_test, 
         'train_num': numerical_train, 'test_num': numerical_test,
         'train_cat_missing': missing_cat_train, 'train_num_missing': missing_num_train,
         'test_cat_missing': missing_cat_train, 'test_num_missing': missing_num_test
     }
+
     # Return dictionary
     return dictionary
+"""
 
+"""
+def normalize(df, type='mean'):
+    pass
 """
     Preprocesses the data so it would be ready to fit into the model
 """
@@ -61,14 +67,6 @@ def Preprocess(data):
     # they might not be as important as the other columns
     data.dropna(thresh=data.shape[0] / 2, axis=1, inplace=True)
 
-    # Getting the features with missing values divifing the 
-    # dataset into categorical and numerical
-    categorical_data = data.select_dtypes('object')
-    numerical_data = data.select_dtypes(['float64', 'int64'])
-
-    # Get the columns with missing data
-    missing_categorical_data = categorical_data.columns[categorical_data.isna().any()].tolist()
-    missing_numerical_data = numerical_data.columns[numerical_data.isna().any()].tolist()
 
 """
     Iteratively goes through various combination of features and selects the best ones.
@@ -79,7 +77,6 @@ def FeatureSelection(features_range=10, choice_number=6, handPickedFeatures = []
 """
     helper functions
 """
-from sklearn.neighbors import KNeighborsClassifier
 
 """ Gets the index of columns with nan property. """
 def getNaIndexes(feature, df):
@@ -88,6 +85,11 @@ def getNaIndexes(feature, df):
 """
     Divides the DataFrame into two parts:
     with na's and without na's
+
+    @params: 
+        X is the y_feature for the non-missing values
+        y is the feature for non-missing values
+        X_test is the y_feature for missing values
 """
 def divideByNA(feature, l, df, y_feature='SalePrice'):
     X, y, X_test = [], [], []
@@ -96,45 +98,37 @@ def divideByNA(feature, l, df, y_feature='SalePrice'):
         if i in l:
             X_test.append(df.iloc[i][y_feature])
         else:
-            X.append(df.iloc[i][feature])
-            y.append(df.iloc[i][y_feature])
+            y.append(df.iloc[i][feature])
+            X.append(df.iloc[i][y_feature])
 
     return np.reshape(X, (-1, 1)),  np.reshape(y, (-1, 1)),  np.reshape(X_test, (-1, 1))
 
 """
-    Fill the nas with knn method
+    Impute the missing data with KNN method
 """
 def fillNaWithKNN(feature, df, y_feature):
+    from sklearn.neighbors import KNeighborsRegressor
     # Instantiate a KNN model
-    knn = KNeighborsClassifier(n_neighbors=df.shape[0]//2 + 1)
+    number_of_neighbors = df.shape[0] // 2 + 1 # Get the number of neighbors to compare with
+    knn = KNeighborsRegressor(n_neighbors=number_of_neighbors, weights='distance')
     # Get the na indexes
-    l = getNaIndexes(feature, df)
+    na_indexes = getNaIndexes(feature, df)
     # Split the data based on the na
-    X, y, X_test = divideByNA(feature, l, df, y_feature)
+    X, y, X_test = divideByNA(feature, na_indexes, df, y_feature)
     # Fit the data
     knn.fit(X, y.ravel())
     # Make the prediction
     y_test = knn.predict(X_test)
-    
+
     # Apply the new values
     c = list(df[feature].copy())
     index = 0
     
     for i in range(df.shape[0]):
-        if i in l:
-            c[i] = y[index]
+        if i in na_indexes:
+            c[i] = y[index][0]
             index += 1
     
     df[feature] = c
     
     return df[feature]
-
-"""
-    Impute using KNN
-"""
-def imputeKNN(data, feature_list, y_feature='SalePrice'):
-    # Impute each feature independently 
-    for feature in feature_list:
-        data[feature] = fillNaWithKNN(feature, data, y_feature)
-
-    return data
