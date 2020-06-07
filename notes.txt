@@ -29,3 +29,11 @@ Data preprocessing:
 			This prodcedure is relied on the y (independent) feature, where
 			the dataframe is broken into dataframes with indexes with na's and
 			non-nas, then the knn algorithm is ran on it.
+
+"""
+    Implementing mini-batch gradient descent:
+        - Having a number for batch-size
+        - Going through the whole dataset in each batch
+        - passing the parameters along from each batch to the other one
+        set_params(**args) /get_params
+"""
