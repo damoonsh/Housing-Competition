@@ -132,3 +132,112 @@ def fillNaWithKNN(feature, df, y_feature):
     df[feature] = c
     
     return df[feature]
+
+def rank_categorical_values(df, category, y_feature='SalePrice'):
+    """
+        Given that there categorical variables, we 
+        want to have them ranked based on their value
+        
+        # Arguments:
+            df: Dataframe
+            category: the category (feature) to be imputated
+            y_feature: the independent feature that we base our
+            ranking on
+        
+        # Returns:
+            imputated column values with the encoding dictionary
+    """
+    # Getting the unique values for the column
+    unique_categories = list(df[category].unique())
+    haveNan = False # Check to see if there is na/nan in unique vales
+    
+    # Deleting nans since they are going to be considered seperately
+    if str(unique_categories[0]) == 'nan':
+        haveNan = True
+        i = unique_categories.index(np.nan)
+        unique_categories.pop(i)
+    # Dictionary containing mean values of different values in column
+    means = {}
+    AVG = 0 # Sum of all avergaes
+    
+    # Going through 
+    for cat in unique_categories:
+        cat_avg = df.loc[df[category] == cat][y_feature].mean()
+        means[cat] = cat_avg
+        AVG += cat_avg
+        
+    # Now considering the nan's or the values that were not in any of the unqiue
+    if haveNan:
+        na_avg = df.loc[~df[category].isin(unique_categories)][y_feature].mean()
+        means['nan'] = na_avg
+        AVG += na_avg
+        unique_categories.append('nan')
+    
+    # Getting the averages
+    for cat in unique_categories:
+        means[cat] /= AVG
+    
+    return means
+
+def impute_rank_weight(col, dic):
+    """
+        Imputes the str values with numbers which are
+        their relative weights.
+        
+        # Arguments:
+            col: a copied version of a slice of the data
+            dic: Dictionary that contains the averages of the 
+                 given unique values in the column
+                 
+        # Returns:
+            decoded column
+    """
+    unique_values = dic.keys()
+    
+    for val in unique_values:
+        col.loc[col == val] = dic[val]
+        
+    if 'nan' in  unique_values: 
+        col.loc[pd.isna(col)] = dic['nan']
+        
+    return col
+
+def encode_categorical(df, features, y_feature='SalePrice'):
+    """
+        Encodes the dataframe's categorical features 
+    
+        # Argument:
+            df: Dataframe (NOTE: pass df.copy() for explicit mutation)
+            featrues: Categorical features to be encoded
+            y_feature: independent data used base our measures on
+            
+        # Returns:
+            encoded data
+    """
+    # Get a dictionary containing all the rankings
+    dic = {}
+    
+    for feature in features:
+        
+        # get the dictionary of averages
+        feat_dic = rank_categorical_values(df, feature)
+        # Change the values based on their corresponding value
+        col = df[feature].copy()
+        df[feature] = impute_rank_weight(col, feat_dic)
+    
+    return df
+
+# Implement this function
+def emit_outliers(df, feature):
+    """
+        Deletes the outliers in a column so the modeling would be 
+        more accurate.
+        
+        # Arguments:
+            df: Dataframe
+            feature: feature that is to be inspected
+        
+        # Returns:
+            A dataframe with deleted outliers
+    """
+    pass
