@@ -67,7 +67,6 @@ def Preprocess(data):
     # they might not be as important as the other columns
     data.dropna(thresh=data.shape[0] / 2, axis=1, inplace=True)
 
-
 """
     Iteratively goes through various combination of features and selects the best ones.
 """
