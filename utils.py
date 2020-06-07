@@ -133,7 +133,27 @@ def fillNaWithKNN(feature, df, y_feature):
     
     return df[feature]
 
-def rank_categorical_values(df, category, y_feature='SalePrice'):
+def softmax(dic):
+    """
+        Performs softmax on a set of values
+        
+        # Arguments:
+            dic: dictionary of values
+            
+        # Returns:
+            A softmax version of the given dictionary
+    """
+    avg = 0
+    for val in dic.keys():
+        avg += np.exp(dic[val])
+        dic[val] = np.exp(dic[val])
+        
+    for val in dic.keys():
+        dic[val] /= avg
+    
+    return dic
+
+def rank_categorical_values(df, category, y_feature='SalePrice', Type='average'):
     """
         Given that there categorical variables, we 
         want to have them ranked based on their value
@@ -142,7 +162,9 @@ def rank_categorical_values(df, category, y_feature='SalePrice'):
             df: Dataframe
             category: the category (feature) to be imputated
             y_feature: the independent feature that we base our
-            ranking on
+                ranking on
+            Type: 'average' would average the values, 'softmax' would
+                perform softmax on the values
         
         # Returns:
             imputated column values with the encoding dictionary
@@ -173,10 +195,12 @@ def rank_categorical_values(df, category, y_feature='SalePrice'):
         AVG += na_avg
         unique_categories.append('nan')
     
-    # Getting the averages
     for cat in unique_categories:
         means[cat] /= AVG
-    
+        
+    if Type == 'softmax':
+        softmax(means)
+        
     return means
 
 def impute_rank_weight(col, dic):
