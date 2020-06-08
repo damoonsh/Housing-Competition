@@ -10,7 +10,7 @@ class FeatureSelector:
         will try out different feature combinations and then 
         compare their results.
 
-        Arguments:  
+        Arguments:
             df: DataFrame
             estimator: the model that train will be trained and
                     evaluated on
@@ -107,7 +107,7 @@ class FeatureSelector:
 
     def add_polynomial(self, df, features, max_exponent=4):
         """ 
-            Adding polynomials to the features 
+            Adding polynomials to the features
 
             Arguments:
                 df: dataframe
@@ -117,7 +117,7 @@ class FeatureSelector:
                 returns the new dataframe 
         """
         for feature in features:
-            for exponent in range(2, max_exponent+1):
+            for exponent in range(2, max_exponent + 1):
                 # Get the exponent 2, 3, 4 of the features
                 title = feature + '^' + str(exponent)
                 df[title] = df[feature] ** exponent       

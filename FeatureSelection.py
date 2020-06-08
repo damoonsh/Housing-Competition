@@ -5,7 +5,7 @@ import numpy as np
 """
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import r2_score
+from sklearn.metrics import mean_squared_error as MSE, r2_score
 
 """ 
     Generates a list of features with the choice of k  out of n. 
@@ -76,11 +76,11 @@ def tryOut(features, n, train, features_in=[], y_feature='SalePrice'):
 """
     Adding polynomials to the features
 """
-def polynomial_options(df, features, max_exponent=3,threshhold=0.011):
+def polynomial_options(df, features, max_exponent=3):
     for feature in features:
-        for exponent in range(1,max_exponent+1):
+        for exponent in range(2, max_exponent+1):
             # Get the exponent 2, 3, 4 of the features
-            df[feature + '^2'] = df[feature] ** exponent
+            title = feature + '^' + str(exponent)
+            df[title] = df[feature] ** exponent
         
-    # Returning the new df
     return df

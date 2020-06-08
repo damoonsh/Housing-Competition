@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 
-
 def load_data(fileName="train.csv", base_path="./dataset/"):
     """ 
         Loads the data into the variables 
@@ -15,6 +14,7 @@ def load_data(fileName="train.csv", base_path="./dataset/"):
     """
     path = base_path + fileName
     return pd.read_csv(path)
+
 
 def load_bench_data():
     """ Loads and formats the benchmark data """
@@ -60,23 +60,17 @@ def retrieve_data():
         'train_cat': categorical_train, 'test_cat': categorical_test, 
         'train_num': numerical_train, 'test_num': numerical_test,
         'train_cat_missing': missing_cat_train, 'train_num_missing': missing_num_train,
-        'test_cat_missing': missing_cat_train, 'test_num_missing': missing_num_test
+        'test_cat_missing': missing_cat_train, 'test_num_missing': missing_num_test,
         'train_cat_list': list(categorical_train.columns), 'train_num_list': list(numerical_train.columns)
     }
 
-    return dictionar
-
-
-"""
-    Iteratively goes through various combination of features and selects the best ones.
-"""
-def FeatureSelection(features_range=10, choice_number=6, handPickedFeatures = []):
-    pass
+    return dictionary
 
 
 def getNaIndexes(feature, df):
     """ Gets the index of columns with nan property. """
     return list(df[feature].index[df[feature].apply(np.isnan)])
+
 
 def divideByNA(feature, l, df, y_feature='SalePrice'):
     """
@@ -103,6 +97,7 @@ def divideByNA(feature, l, df, y_feature='SalePrice'):
             X.append(df.iloc[i][y_feature])
 
     return np.reshape(X, (-1, 1)),  np.reshape(y, (-1, 1)),  np.reshape(X_test, (-1, 1))
+
 
 def fillNaWithKNN(feature, df, y_feature):
     """
@@ -141,6 +136,7 @@ def fillNaWithKNN(feature, df, y_feature):
     
     return df[feature]
 
+
 def softmax(dic):
     """
         Performs softmax on a set of values
@@ -161,6 +157,23 @@ def softmax(dic):
     
     return dic
 
+
+def stringify_keys(l):
+    """
+        casts all the values as str
+        
+        # Arguments:
+            l: list
+        # Returns:
+            new list with all str values
+    """
+    for item in l:
+        if type(item) != str:
+            l.remove(item)
+            l.append(str(item))
+    return l
+ 
+
 def rank_categorical_values(df, category, y_feature='SalePrice', Type='average'):
     """
         Given that there categorical variables, we 
@@ -178,20 +191,22 @@ def rank_categorical_values(df, category, y_feature='SalePrice', Type='average')
             imputated column values with the encoding dictionary
     """
     # Getting the unique values for the column
-    unique_categories = list(df[category].unique())
+    vals_list = list(df[category].unique())
+    unique_categories = stringify_keys(vals_list)
     haveNan = False # Check to see if there is na/nan in unique vales
     
     # Deleting nans since they are going to be considered seperately
-    if str(unique_categories[0]) == 'nan':
+    if 'nan' in unique_categories:
         haveNan = True
         i = unique_categories.index(np.nan)
         unique_categories.pop(i)
     # Dictionary containing mean values of different values in column
     means = {}
     AVG = 0 # Sum of all avergaes
-    
+    print(unique_categories)
     # Going through 
     for cat in unique_categories:
+        print(cat, df.loc[df[category] == cat][y_feature].mean())
         cat_avg = df.loc[df[category] == cat][y_feature].mean()
         means[cat] = cat_avg
         AVG += cat_avg
@@ -209,7 +224,9 @@ def rank_categorical_values(df, category, y_feature='SalePrice', Type='average')
     if Type == 'softmax':
         softmax(means)
         
+    # IF the Type was not softmax return averages
     return means
+
 
 def impute_rank_weight(col, dic):
     """
@@ -234,7 +251,8 @@ def impute_rank_weight(col, dic):
         
     return col
 
-def encode_categorical(df, features, y_feature='SalePrice'):
+
+def encode_categorical(df, features, y_feature='SalePrice', Type='average'):
     """
         Encodes the dataframe's categorical features 
     
@@ -250,14 +268,16 @@ def encode_categorical(df, features, y_feature='SalePrice'):
     dic = {}
     
     for feature in features:
-        
+        print(feature)
         # get the dictionary of averages
-        feat_dic = rank_categorical_values(df, feature)
+        feat_dic = rank_categorical_values(df, feature, y_feature, Type)
+        print(feat_dic)
         # Change the values based on their corresponding value
         col = df[feature].copy()
         df[feature] = impute_rank_weight(col, feat_dic)
     
     return df
+
 
 # Implement this function
 def emit_outliers(df, feature):
