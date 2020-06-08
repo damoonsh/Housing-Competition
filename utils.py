@@ -1,31 +1,42 @@
 import numpy as np
 import pandas as pd
 
-"""
-    Loads the data into the variables
-"""
+
 def load_data(fileName="train.csv", base_path="./dataset/"):
+    """ 
+        Loads the data into the variables 
+        
+        # Arguments:
+            filename: name of the .csv file
+            base_path: path to were the data is
+        
+        # Returns:
+            returns the dataset in a np.array
+    """
     path = base_path + fileName
     return pd.read_csv(path)
 
-""" Loads and formats the benchmark data"""
 def load_bench_data():
+    """ Loads and formats the benchmark data """
     bench = load_data('bench-mark.csv' ,'./')
     bench['Id'] = bench['Id'] - bench.shape[0] - 1 
     bench = bench.set_index('Id')
 
     return bench
 
-""" 
-    Retrieve Data:
-    gets the different datasets and returns the splitted data based on
-    their relative attributes in a dictionary
 
-    further improvement:
-    The datatypes within data could be identified and then
-    classified based on the available data types
- """
 def retrieve_data():
+    """ 
+        Loads train and test datasets and puts into a dictionary and returns 
+        the splitted data based on their relative attributes in a dictionary
+
+        further improvement:
+        The datatypes within data could be identified and then
+        classified based on the available data types
+        
+        # Returns:
+            dictionary containing info on train and test data
+     """
     # Load Data
     test = load_data(fileName='test.csv')
     train = load_data(fileName='train.csv')
@@ -50,22 +61,11 @@ def retrieve_data():
         'train_num': numerical_train, 'test_num': numerical_test,
         'train_cat_missing': missing_cat_train, 'train_num_missing': missing_num_train,
         'test_cat_missing': missing_cat_train, 'test_num_missing': missing_num_test
+        'train_cat_list': list(categorical_train.columns), 'train_num_list': list(numerical_train.columns)
     }
 
-    # Return dictionary
-    return dictionary
-"""
+    return dictionar
 
-"""
-def normalize(df, type='mean'):
-    pass
-"""
-    Preprocesses the data so it would be ready to fit into the model
-"""
-def Preprocess(data):
-    # Droping All the columns with more than half of rows NaNs simply because 
-    # they might not be as important as the other columns
-    data.dropna(thresh=data.shape[0] / 2, axis=1, inplace=True)
 
 """
     Iteratively goes through various combination of features and selects the best ones.
@@ -73,24 +73,26 @@ def Preprocess(data):
 def FeatureSelection(features_range=10, choice_number=6, handPickedFeatures = []):
     pass
 
-"""
-    helper functions
-"""
 
-""" Gets the index of columns with nan property. """
 def getNaIndexes(feature, df):
+    """ Gets the index of columns with nan property. """
     return list(df[feature].index[df[feature].apply(np.isnan)])
 
-"""
-    Divides the DataFrame into two parts:
-    with na's and without na's
-
-    @params: 
-        X is the y_feature for the non-missing values
-        y is the feature for non-missing values
-        X_test is the y_feature for missing values
-"""
 def divideByNA(feature, l, df, y_feature='SalePrice'):
+    """
+        Divides the DataFrame into two parts: with na's and without na's
+
+        # Arguments: 
+            feature: target feature which data will be splited based on
+            l: list of indices with na values
+            y_featrue: in this function this is the independent value
+            
+        # Returns:
+            X, y, X_test
+    """
+    # X is the y_feature for the non-missing values
+    # y is the feature for non-missing values
+    # X_test is the y_feature for missing values
     X, y, X_test = [], [], []
     
     for i in range(0, df.shape[0]):
@@ -102,10 +104,18 @@ def divideByNA(feature, l, df, y_feature='SalePrice'):
 
     return np.reshape(X, (-1, 1)),  np.reshape(y, (-1, 1)),  np.reshape(X_test, (-1, 1))
 
-"""
-    Impute the missing data with KNN method
-"""
 def fillNaWithKNN(feature, df, y_feature):
+    """
+        Impute the missing data with KNN method
+    
+        # Arguments:
+            feature: feature in the dataframe to imputate
+            df: Dataframe
+            y_feature: independent feature
+        
+        # Returns:
+            column with imputated data
+    """
     from sklearn.neighbors import KNeighborsRegressor
     # Instantiate a KNN model
     number_of_neighbors = df.shape[0] // 2 + 1 # Get the number of neighbors to compare with
@@ -118,7 +128,6 @@ def fillNaWithKNN(feature, df, y_feature):
     knn.fit(X, y.ravel())
     # Make the prediction
     y_test = knn.predict(X_test)
-
     # Apply the new values
     c = list(df[feature].copy())
     index = 0
