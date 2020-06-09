@@ -1,6 +1,6 @@
 Data preprocessing:
 	General strategy: 
-		Using features that are not missing*[1] to imputate the missing data with 
+		Using features that are not missing*[1] to impute the missing data with 
 		an algorithm. 
 
 		NOTE[1]: Given that there are small fraction of missing values in the a feature
@@ -21,12 +21,12 @@ Data preprocessing:
 			   know the average of each group that each data point features are in g1,g2,
 			   g3,g4, hence: x5(i) = w15 * g1 + ... + w45 * g4
 
-			   g denotes the avergae of that cluster,
+			   g denotes the average of that cluster,
 			   w denotes weights where w15 = rel15 / (rel15 + ... + rel45)
 
 
 		KNN:
-			This prodcedure is relied on the y (independent) feature, where
+			This procedure is relied on the y (independent) feature, where
 			the dataframe is broken into dataframes with indexes with na's and
 			non-nas, then the knn algorithm is ran on it.
 
@@ -37,3 +37,6 @@ Data preprocessing:
         - passing the parameters along from each batch to the other one
         set_params(**args) /get_params
 """
+Fixes:
+	1. Make the type of data in the encoded categorical column to int or float
+	2. Solve the problems with na and 'nan' values in the dataset

@@ -28,6 +28,7 @@ class FeatureSelector:
             Arguments:
                 List: list of features
                 n_choice: number of choices out of all features
+                
             Returns:    
                 the list of different possible combinations features                
         """
