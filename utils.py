@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+
 def load_data(fileName="train.csv", base_path="./dataset/"):
     """ 
         Loads the data into the variables 
@@ -77,7 +78,7 @@ def divideByNA(feature, l, df, y_feature='SalePrice'):
         Divides the DataFrame into two parts: with na's and without na's
 
         # Arguments: 
-            feature: target feature which data will be splited based on
+            feature: target feature which data will be splitted based on
             l: list of indices with na values
             y_featrue: in this function this is the independent value
             
@@ -104,12 +105,12 @@ def fillNaWithKNN(feature, df, y_feature):
         Impute the missing data with KNN method
     
         # Arguments:
-            feature: feature in the dataframe to imputate
+            feature: feature in the dataframe to impute
             df: Dataframe
             y_feature: independent feature
         
         # Returns:
-            column with imputated data
+            column with imputed data
     """
     from sklearn.neighbors import KNeighborsRegressor
     # Instantiate a KNN model
@@ -181,37 +182,44 @@ def rank_categorical_values(df, category, y_feature='SalePrice', Type='average')
         
         # Arguments:
             df: Dataframe
-            category: the category (feature) to be imputated
+            category: the category (feature) to be imputed
             y_feature: the independent feature that we base our
                 ranking on
             Type: 'average' would average the values, 'softmax' would
                 perform softmax on the values
         
         # Returns:
-            imputated column values with the encoding dictionary
+            imputed column values with the encoding dictionary
+            True if the data needed raking False if not
     """
     # Getting the unique values for the column
     vals_list = list(df[category].unique())
+    
+    # If the data type in the first one is not either na or str then it is a number
+    # And won't need processing
+    if not (pd.isna(vals_list[0]) or type(vals_list[0]) == str):
+        print('Did not need rankking')
+        return {}, False
     unique_categories = stringify_keys(vals_list)
     haveNan = False # Check to see if there is na/nan in unique vales
     
     # Deleting nans since they are going to be considered seperately
     if 'nan' in unique_categories:
         haveNan = True
-        i = unique_categories.index(np.nan)
+        i = unique_categories.index('nan')
         unique_categories.pop(i)
+        
     # Dictionary containing mean values of different values in column
     means = {}
-    AVG = 0 # Sum of all avergaes
-    print(unique_categories)
+    AVG = 0 # Sum of all averages
+    
     # Going through 
     for cat in unique_categories:
-        print(cat, df.loc[df[category] == cat][y_feature].mean())
         cat_avg = df.loc[df[category] == cat][y_feature].mean()
         means[cat] = cat_avg
         AVG += cat_avg
         
-    # Now considering the nan's or the values that were not in any of the unqiue
+    # Now considering the nan's or the values that were not in any of the unique
     if haveNan:
         na_avg = df.loc[~df[category].isin(unique_categories)][y_feature].mean()
         means['nan'] = na_avg
@@ -225,7 +233,7 @@ def rank_categorical_values(df, category, y_feature='SalePrice', Type='average')
         softmax(means)
         
     # IF the Type was not softmax return averages
-    return means
+    return means, True
 
 
 def impute_rank_weight(col, dic):
@@ -246,10 +254,10 @@ def impute_rank_weight(col, dic):
     for val in unique_values:
         col.loc[col == val] = dic[val]
         
-    if 'nan' in  unique_values: 
+    if 'nan' in  unique_values:
         col.loc[pd.isna(col)] = dic['nan']
         
-    return col
+    return col.astype(float)
 
 
 def encode_categorical(df, features, y_feature='SalePrice', Type='average'):
@@ -264,14 +272,14 @@ def encode_categorical(df, features, y_feature='SalePrice', Type='average'):
         # Returns:
             encoded data
     """
-    # Get a dictionary containing all the rankings
+    # Dictionary containing all the rankings
     dic = {}
     
     for feature in features:
-        print(feature)
         # get the dictionary of averages
-        feat_dic = rank_categorical_values(df, feature, y_feature, Type)
-        print(feat_dic)
+        feat_dic, change = rank_categorical_values(df, feature, y_feature, Type)
+        # IF the feature did not need any ranking: pass
+        if not change: pass
         # Change the values based on their corresponding value
         col = df[feature].copy()
         df[feature] = impute_rank_weight(col, feat_dic)
