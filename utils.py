@@ -175,7 +175,7 @@ def stringify_keys(l):
     return l
  
 
-def rank_categorical_values(df, category, y_feature='SalePrice', Type='average'):
+def rank_categorical_values(df, category, y_feature='SalePrice', Type='average', outlier=False):
     """
         Given that there categorical variables, we 
         want to have them ranked based on their value
@@ -187,7 +187,9 @@ def rank_categorical_values(df, category, y_feature='SalePrice', Type='average')
                 ranking on
             Type: 'average' would average the values, 'softmax' would
                 perform softmax on the values
-        
+            outlier: given that it is set to True, the outliers in the 
+                y_feature of the dataframe would not be considered
+            
         # Returns:
             imputed column values with the encoding dictionary
             True if the data needed raking False if not
@@ -300,4 +302,14 @@ def emit_outliers(df, feature):
         # Returns:
             A dataframe with deleted outliers
     """
-    pass
+    q1 = df[feature].quntile(0.25)
+    q2 = df[feature].quntile(0.5)
+    q3 = df[feature].quntile(0.75)
+    iqr = q3 - q1
+    upper_bound = q1 - 1.5 * iqr
+    lower_bound = q3 + 1.5 * iqr
+    
+    df[feature] = df[feature][df[feature] < upper_bound]
+    df[feature] = df[feature][df[feature] < lower_bound]
+    
+    return df

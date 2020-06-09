@@ -1,4 +1,5 @@
 Data preprocessing:
+
 	General strategy: 
 		Using features that are not missing*[1] to impute the missing data with 
 		an algorithm. 
@@ -29,14 +30,9 @@ Data preprocessing:
 			This procedure is relied on the y (independent) feature, where
 			the dataframe is broken into dataframes with indexes with na's and
 			non-nas, then the knn algorithm is ran on it.
-
-"""
-    Implementing mini-batch gradient descent:
-        - Having a number for batch-size
-        - Going through the whole dataset in each batch
-        - passing the parameters along from each batch to the other one
-        set_params(**args) /get_params
-"""
-Fixes:
-	1. Make the type of data in the encoded categorical column to int or float
-	2. Solve the problems with na and 'nan' values in the dataset
+# Implement:
+	- Drop the ID column in the dataframe
+	- Try out PCA
+    - Implement the class for knn imptation
+    
+# Fixes:
