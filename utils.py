@@ -232,13 +232,13 @@ def rank_categorical_values(df, category, y_feature='SalePrice', Type='average',
         means[cat] /= AVG
         
     if Type == 'softmax':
-        softmax(means)
+        return softmax(means), True
         
     # IF the Type was not softmax return averages
     return means, True
 
 
-def impute_rank_weight(col, dic):
+def impute_rank_weight(col, dic, Normalize):
     """
         Imputes the str values with numbers which are
         their relative weights.
@@ -262,7 +262,7 @@ def impute_rank_weight(col, dic):
     return col.astype(float)
 
 
-def encode_categorical(df, features, y_feature='SalePrice', Type='average'):
+def encode_categorical(df, features, y_feature='SalePrice', Type='average', normalize=False):
     """
         Encodes the dataframe's categorical features 
     
@@ -313,3 +313,20 @@ def emit_outliers(df, feature):
     df[feature] = df[feature][df[feature] < lower_bound]
     
     return df
+
+def normalize(col, Type='avg'):
+    """
+        Normalizes the 
+        
+        # Arguments:
+            col: column of data
+            Type: avg scales the data with average of column
+                  std scales the data with standard deviation of the column
+    
+        # Returns:
+            returns the normalized data
+    """
+    if Type == 'std':
+        return (col.mean() - col) / col.mean()
+    
+    return (col.mean() - col) / col.std()
