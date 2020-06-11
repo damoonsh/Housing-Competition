@@ -19,11 +19,30 @@ def load_data(fileName="train.csv", base_path="./dataset/"):
 
 def load_bench_data():
     """ Loads and formats the benchmark data """
-    bench = load_data('bench-mark.csv' ,'./')
+    bench = load_data('bench-mark.csv' ,'./dataset/')
     bench['Id'] = bench['Id'] - bench.shape[0] - 1 
     bench = bench.set_index('Id')
 
     return bench
+
+
+def impute_numerical(data, Type='train'):
+    # LotFrontage and GarageYrBlt should equal zeos 
+    # for NaN's since it means 0 meters of lot frontage
+    data['LotFrontage'] = data['LotFrontage'].fillna(0)
+    data['MasVnrArea'] = data['MasVnrArea'].fillna(0)
+    # If this is the training data then use knn
+    if Type == 'train':
+        data['GarageYrBlt'] = fillNaWithKNN('GarageYrBlt', data.copy(), 'SalePrice')
+    
+    return data
+
+
+def preprocess_train(data):
+    data = impute_numerical(data)
+    data = encode_categorical(train, data.select_dtypes(['float64', 'int64']).columns[numerical_train.isna().any()].tolist())
+    
+    return data
 
 
 def retrieve_data():
@@ -69,7 +88,16 @@ def retrieve_data():
 
 
 def getNaIndexes(feature, df):
-    """ Gets the index of columns with nan property. """
+    """ 
+        Gets the index of columns with nan property. 
+
+        # Arguments:
+            feature: feature of the dataframe
+            df: dataframe
+
+        # Returns:
+            indices of na values in the 
+    """
     return list(df[feature].index[df[feature].apply(np.isnan)])
 
 
@@ -112,12 +140,16 @@ def fillNaWithKNN(feature, df, y_feature):
         # Returns:
             column with imputed data
     """
+    # If there were no missing values
+    if not df[feature].isna().any():
+        return df[feature]
+    
     from sklearn.neighbors import KNeighborsRegressor
     # Instantiate a KNN model
     number_of_neighbors = df.shape[0] // 2 + 1 # Get the number of neighbors to compare with
     knn = KNeighborsRegressor(n_neighbors=number_of_neighbors, weights='distance')
     # Get the na indexes
-    na_indexes = getNaIndexes(feature, df)
+    na_indexes = list(df[feature].index[df[feature].apply(np.isnan)])
     # Split the data based on the na
     X, y, X_test = divideByNA(feature, na_indexes, df, y_feature)
     # Fit the data
@@ -207,6 +239,7 @@ def rank_categorical_values(df, category, y_feature='SalePrice', Type='average',
     
     # Deleting nans since they are going to be considered seperately
     if 'nan' in unique_categories:
+#         print('has nan')
         haveNan = True
         i = unique_categories.index('nan')
         unique_categories.pop(i)
@@ -225,12 +258,13 @@ def rank_categorical_values(df, category, y_feature='SalePrice', Type='average',
     if haveNan:
         na_avg = df.loc[~df[category].isin(unique_categories)][y_feature].mean()
         means['nan'] = na_avg
+#         print('avg: ',na_avg)
         AVG += na_avg
         unique_categories.append('nan')
     
     for cat in unique_categories:
         means[cat] /= AVG
-        
+#     print(means)
     if Type == 'softmax':
         return softmax(means), True
         
@@ -238,7 +272,7 @@ def rank_categorical_values(df, category, y_feature='SalePrice', Type='average',
     return means, True
 
 
-def impute_rank_weight(col, dic, Normalize):
+def impute_rank_weight(col, dic):
     """
         Imputes the str values with numbers which are
         their relative weights.
@@ -262,7 +296,7 @@ def impute_rank_weight(col, dic, Normalize):
     return col.astype(float)
 
 
-def encode_categorical(df, features, y_feature='SalePrice', Type='average', normalize=False):
+def encode_categorical(df, features, y_feature='SalePrice', Type='average'):
     """
         Encodes the dataframe's categorical features 
     
@@ -276,6 +310,7 @@ def encode_categorical(df, features, y_feature='SalePrice', Type='average', norm
     """
     # Dictionary containing all the rankings
     dic = {}
+    dics = {}
     
     for feature in features:
         # get the dictionary of averages
@@ -285,11 +320,11 @@ def encode_categorical(df, features, y_feature='SalePrice', Type='average', norm
         # Change the values based on their corresponding value
         col = df[feature].copy()
         df[feature] = impute_rank_weight(col, feat_dic)
+#         print(df[feature])
     
     return df
 
 
-# Implement this function
 def emit_outliers(df, feature):
     """
         Deletes the outliers in a column so the modeling would be 
@@ -314,7 +349,7 @@ def emit_outliers(df, feature):
     
     return df
 
-def normalize(col, Type='avg'):
+def normalize(col, Type='std'):
     """
         Normalizes the 
         
@@ -326,7 +361,31 @@ def normalize(col, Type='avg'):
         # Returns:
             returns the normalized data
     """
-    if Type == 'std':
-        return (col.mean() - col) / col.mean()
+    if Type == 'avg':
+        return (col - col.mean()) / col.mean()
     
-    return (col.mean() - col) / col.std()
+    return (col - col.mean()) / col.std()
+
+
+def build_model01():
+  model = keras.Sequential([
+    layers.Dense(64, input_shape=[len(std_d.keys())]),
+    layers.Dense(128, activation='relu'),
+    layers.Dense(128, activation='softmax'),
+    layers.Dropout(0.5),
+    layers.Dense(256, activation='relu'),
+    layers.Dense(256, activation='softmax'),
+    layers.Dropout(0.5),
+    layers.Dense(128, activation='relu'),
+    layers.Dense(128, activation='softmax'),
+    layers.Dropout(0.5),
+    layers.Dense(64, activation='relu'),
+    layers.Dense(1)
+  ])
+
+  optimizer = tf.keras.optimizers.RMSprop(0.01)
+
+  model.compile(loss='mse',
+                optimizer=optimizer,
+                metrics=['mse', 'msle'])
+  return model
