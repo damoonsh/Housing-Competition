@@ -87,6 +87,23 @@ def retrieve_data():
     return dictionary
 
 
+def quantize(values):
+    """
+        emits the floating point in a list of numbers
+        
+        # Argument(s): values
+        
+        # Returns: the modified version
+    """
+    modified = [] 
+    for num in list(pd.DataFrame(pred_y)[0].values):
+        if num - int(num) >= 0.5:
+            modified.append(int(num) + 1)
+        else:
+            modified.append(int(num))
+            
+    return modified
+
 def getNaIndexes(feature, df):
     """ 
         Gets the index of columns with nan property. 
@@ -207,7 +224,7 @@ def stringify_keys(l):
     return l
  
 
-def rank_categorical_values(df, category, y_feature='SalePrice', Type='average', outlier=False):
+def rank_categorical_values(df, category, y_feature='SalePrice', Type='average', outlier=False, uniques=None):
     """
         Given that there categorical variables, we 
         want to have them ranked based on their value
@@ -217,29 +234,36 @@ def rank_categorical_values(df, category, y_feature='SalePrice', Type='average',
             category: the category (feature) to be imputed
             y_feature: the independent feature that we base our
                 ranking on
-            Type: 'average' would average the values, 'softmax' would
-                perform softmax on the values
+            Type: 
+                'average' would average the values, 
+                'softmax' would perform softmax on the values
+                'plain' would just return the actual values of the averages
+                'norm' returns the normalized version of means
             outlier: given that it is set to True, the outliers in the 
                 y_feature of the dataframe would not be considered
+            uniques: Sending 
             
         # Returns:
             imputed column values with the encoding dictionary
             True if the data needed raking False if not
     """
-    # Getting the unique values for the column
-    vals_list = list(df[category].unique())
+    if uniques is None:
+        # Getting the unique values for the column
+        vals_list = list(df[category].unique())
+    else:
+        vals_list = uniques
     
     # If the data type in the first one is not either na or str then it is a number
     # And won't need processing
     if not (pd.isna(vals_list[0]) or type(vals_list[0]) == str):
         print('Did not need rankking')
         return {}, False
+    
     unique_categories = stringify_keys(vals_list)
     haveNan = False # Check to see if there is na/nan in unique vales
     
     # Deleting nans since they are going to be considered seperately
     if 'nan' in unique_categories:
-#         print('has nan')
         haveNan = True
         i = unique_categories.index('nan')
         unique_categories.pop(i)
@@ -248,7 +272,7 @@ def rank_categorical_values(df, category, y_feature='SalePrice', Type='average',
     means = {}
     AVG = 0 # Sum of all averages
     
-    # Going through 
+    # Going through unique values
     for cat in unique_categories:
         cat_avg = df.loc[df[category] == cat][y_feature].mean()
         means[cat] = cat_avg
@@ -258,13 +282,15 @@ def rank_categorical_values(df, category, y_feature='SalePrice', Type='average',
     if haveNan:
         na_avg = df.loc[~df[category].isin(unique_categories)][y_feature].mean()
         means['nan'] = na_avg
-#         print('avg: ',na_avg)
         AVG += na_avg
         unique_categories.append('nan')
     
+    if Type == 'plain':
+        return means, True
+    
     for cat in unique_categories:
         means[cat] /= AVG
-#     print(means)
+        
     if Type == 'softmax':
         return softmax(means), True
         
@@ -388,4 +414,57 @@ def build_model01():
   model.compile(loss='mse',
                 optimizer=optimizer,
                 metrics=['mse', 'msle'])
+  return model
+
+def build_model02():
+  model = keras.Sequential([
+    layers.InputLayer(input_shape=[len(X.keys())]),
+    layers.Dense(64, activation='relu'),
+    layers.Dense(64),
+    layers.Dense(128),
+    layers.Dense(256),
+    layers.BatchNormalization(),
+    layers.Dense(256, activation='relu'),
+    layers.Dense(256),
+    layers.Dense(512),
+    layers.Dense(1024),
+    layers.Dropout(0.3),
+    layers.BatchNormalization(),
+    layers.Dense(512, activation='relu'),
+    layers.Dense(512),
+    layers.Dense(256),
+    layers.Dense(128),
+    layers.BatchNormalization(),
+    layers.Dense(64, activation='relu'),
+    layers.Dense(64),
+    layers.Dense(32),
+    layers.Dense(16),
+    layers.Dense(1)
+  ])
+
+  optimizer = tf.keras.optimizers.Adam(0.001)
+
+  model.compile(loss='msle',
+                optimizer=optimizer,
+                metrics=['msle']
+               )
+  return model
+# 0.16:
+def build_model03():
+  model = keras.Sequential([
+    layers.InputLayer(input_shape=[len(X.keys())]),
+    layers.BatchNormalization(),
+    layers.Dense(64),
+    layers.Dense(64, activation='relu'),
+    layers.Dense(128, activation='relu'),
+    layers.Dense(64),
+    layers.Dense(32, activation='relu'),
+    layers.Dense(1)
+  ])
+
+  optimizer = tf.keras.optimizers.Adam(0.001)
+
+  model.compile(loss='msle',
+                optimizer=optimizer,
+               )
   return model
