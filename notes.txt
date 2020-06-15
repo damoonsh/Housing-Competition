@@ -8,7 +8,7 @@ Data preprocessing:
 		, we can first impute that by filling it with mean or mode.
         
         - encoding:
-            first get the avergae for a given unique value
+            first get the average for a given unique value
             then get the z-score for any of the salePrice values
             in the row and multiply it by the portion related to other averages
         
@@ -30,18 +30,28 @@ Data preprocessing:
 			   g denotes the average of that cluster,
 			   w denotes weights where w15 = rel15 / (rel15 + ... + rel45)
 
+		After merging the train and test dataset then 
+
 		KNN:
 			This procedure is relied on the y (independent) feature, where
 			the dataframe is broken into dataframes with indexes with na's and
 			non-nas, then the knn algorithm is ran on it.
+            
+
+Add one of the highest predictions to test set and then try to impute the whole data
+with each of those SalePrices. 
+Note: this is for the case where trying to encode categorical data using both portion
+of averages and the gaussian distribution.
+
+            
 # Implement:
 	- Try out PCA
-    - Implement the class for knn imptation
-    - Implement vaiours combinations of exponents for features
+    - Implement the class for knn imputation
+    - Implement various combinations of exponents for features
     - a clear pathway to compare the values of bench mark and predicted
     - impute data using knn and first use the non-missing columns and impute
         a column then use the newly imputed column to go about 
     
 # Fixes:
     - rewrite some of the  function in utils(impute using mapping)
-    - in dics instead of 'nan' put np.nan then use mapping
+    - in dicts instead of 'nan' put np.nan then use mapping
