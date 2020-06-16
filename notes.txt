@@ -51,7 +51,9 @@ of averages and the gaussian distribution.
     - a clear pathway to compare the values of bench mark and predicted
     - impute data using knn and first use the non-missing columns and impute
         a column then use the newly imputed column to go about 
-    
+    - impute data by adding the lowest rate error of data to the test y_feat
+        then do the imputation
+
 # Fixes:
     - rewrite some of the  function in utils(impute using mapping)
     - in dicts instead of 'nan' put np.nan then use mapping
