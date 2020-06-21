@@ -56,6 +56,7 @@ of averages and the gaussian distribution.
     - use dropout with layer normalization for overfitting
     - use hyperparameter tunning using kerastuner
     - also use schedule optimizer within the Adam optimizer
+    - try out multiple input and output entry to the model
 
 # Fixes:
     - rewrite some of the  function in utils(impute using mapping)
