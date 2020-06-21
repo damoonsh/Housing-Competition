@@ -2,5 +2,4 @@
 .idea/
 .vscode/
 __pycache__/
-*.csv
 tut/
