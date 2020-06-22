@@ -53,10 +53,9 @@ of averages and the gaussian distribution.
         a column then use the newly imputed column to go about 
     - impute data by adding the lowest rate error of data to the test y_feat
         then do the imputation
-    - use dropout with layer normalization for overfitting
     - use hyperparameter tunning using kerastuner
-    - also use schedule optimizer within the Adam optimizer
-    - try out multiple input and output entry to the model
+    - Write a number of different models then validate their accuracy based on
+        the validation model, then average the predictions.
 
 # Fixes:
     - rewrite some of the  function in utils(impute using mapping)
