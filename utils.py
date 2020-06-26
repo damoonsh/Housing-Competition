@@ -1,6 +1,6 @@
+# house/utils.py: some functions that help and increase the productivity the preprocessing and fitting process
 import numpy as np
 import pandas as pd
-
 
 def load_data(fileName="train.csv", base_path="./dataset/"):
     """ 
@@ -24,25 +24,6 @@ def load_bench_data(file_name, root='./submissions/'):
     bench = bench.set_index('Id')
 
     return bench
-
-
-def impute_numerical(data, Type='train'):
-    # LotFrontage and GarageYrBlt should equal zeos 
-    # for NaN's since it means 0 meters of lot frontage
-    data['LotFrontage'] = data['LotFrontage'].fillna(0)
-    data['MasVnrArea'] = data['MasVnrArea'].fillna(0)
-    # If this is the training data then use knn
-    if Type == 'train':
-        data['GarageYrBlt'] = fillNaWithKNN('GarageYrBlt', data.copy(), 'SalePrice')
-    
-    return data
-
-
-def preprocess_train(data):
-    data = impute_numerical(data)
-    data = encode_categorical(train, data.select_dtypes(['float64', 'int64']).columns[numerical_train.isna().any()].tolist())
-    
-    return data
 
 
 def retrieve_data():
@@ -104,6 +85,7 @@ def quantize(values):
             
     return modified
 
+
 def getNaIndexes(feature, df):
     """ 
         Gets the index of columns with nan property. 
@@ -116,75 +98,6 @@ def getNaIndexes(feature, df):
             indices of na values in the 
     """
     return list(df[feature].index[df[feature].apply(np.isnan)])
-
-
-def divideByNA(feature, l, df, y_feature='SalePrice'):
-    """
-        Divides the DataFrame into two parts: with na's and without na's
-
-        # Arguments: 
-            feature: target feature which data will be splitted based on
-            l: list of indices with na values
-            y_featrue: in this function this is the independent value
-            
-        # Returns:
-            X, y, X_test
-    """
-    # X is the y_feature for the non-missing values
-    # y is the feature for non-missing values
-    # X_test is the y_feature for missing values
-    X, y, X_test = [], [], []
-    
-    for i in range(0, df.shape[0]):
-        if i in l:
-            X_test.append(df.iloc[i][y_feature])
-        else:
-            y.append(df.iloc[i][feature])
-            X.append(df.iloc[i][y_feature])
-
-    return np.reshape(X, (-1, 1)),  np.reshape(y, (-1, 1)),  np.reshape(X_test, (-1, 1))
-
-
-def fillNaWithKNN(feature, df, y_feature):
-    """
-        Impute the missing data with KNN method
-    
-        # Arguments:
-            feature: feature in the dataframe to impute
-            df: Dataframe
-            y_feature: independent feature
-        
-        # Returns:
-            column with imputed data
-    """
-    # If there were no missing values
-    if not df[feature].isna().any():
-        return df[feature]
-    
-    from sklearn.neighbors import KNeighborsRegressor
-    # Instantiate a KNN model
-    number_of_neighbors = df.shape[0] // 2 + 1 # Get the number of neighbors to compare with
-    knn = KNeighborsRegressor(n_neighbors=number_of_neighbors, weights='distance')
-    # Get the na indexes
-    na_indexes = list(df[feature].index[df[feature].apply(np.isnan)])
-    # Split the data based on the na
-    X, y, X_test = divideByNA(feature, na_indexes, df, y_feature)
-    # Fit the data
-    knn.fit(X, y.ravel())
-    # Make the prediction
-    y_test = knn.predict(X_test)
-    # Apply the new values
-    c = list(df[feature].copy())
-    index = 0
-    
-    for i in range(df.shape[0]):
-        if i in na_indexes:
-            c[i] = y[index][0]
-            index += 1
-    
-    df[feature] = c
-    
-    return df[feature]
 
 
 def softmax(dic):
