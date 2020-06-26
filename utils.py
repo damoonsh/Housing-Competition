@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 
+
 def load_data(fileName="train.csv", base_path="./dataset/"):
     """ 
         Loads the data into the variables 
@@ -68,14 +69,25 @@ def retrieve_data():
     return dictionary
 
 
+def missing_info(data):
+    """ retuns two dataframes (train, test) defining their relative missing values. """
+    # test data:
+    cat_dict = {
+        "Test": dict(data['test'][data['test_cat_missing']].isna().sum()), 
+        "Train": dict(data['train'][data['train_cat_missing']].isna().sum())
+    }
+
+    # train data:
+    num_dict = {
+        "Test": dict(data['train'][data['train_num_missing']].isna().sum()), 
+        "Train": dict(data['test'][data['test_num_missing']].isna().sum())
+    }
+
+    return pd.DataFrame(cat_dict).fillna(0), pd.DataFrame(num_dict).fillna(0)
+
+
 def quantize(values):
-    """
-        emits the floating point in a list of numbers
-        
-        # Argument(s): values
-        
-        # Returns: the modified version
-    """
+    """ emits the floating point in a list of numbers. """
     modified = [] 
     for num in list(values):
         if num - int(num) >= 0.5:
@@ -86,50 +98,13 @@ def quantize(values):
     return modified
 
 
-def getNaIndexes(feature, df):
-    """ 
-        Gets the index of columns with nan property. 
-
-        # Arguments:
-            feature: feature of the dataframe
-            df: dataframe
-
-        # Returns:
-            indices of na values in the 
-    """
+def getNaIndexes(df, feature=''):
+    """ Gets the index of columns with nan property. """ 
     return list(df[feature].index[df[feature].apply(np.isnan)])
 
 
-def softmax(dic):
-    """
-        Performs softmax on a set of values
-        
-        # Arguments:
-            dic: dictionary of values
-            
-        # Returns:
-            A softmax version of the given dictionary
-    """
-    avg = 0
-    for val in dic.keys():
-        avg += np.exp(dic[val])
-        dic[val] = np.exp(dic[val])
-        
-    for val in dic.keys():
-        dic[val] /= avg
-    
-    return dic
-
-
 def stringify_keys(l):
-    """
-        casts all the values as str
-        
-        # Arguments:
-            l: list
-        # Returns:
-            new list with all str values
-    """
+    """ casts all the values as str """
     for item in l:
         if type(item) != str:
             l.remove(item)
@@ -137,7 +112,7 @@ def stringify_keys(l):
     return l
  
 
-def rank_categorical_values(df, category, y_feature='SalePrice', Type='average', outlier=False, uniques=None):
+def encode_categorical_feature(df, category, y_feature='SalePrice', Type='average', outlier=False, uniques=None):
     """
         Given that there categorical variables, we 
         want to have them ranked based on their value
@@ -149,8 +124,6 @@ def rank_categorical_values(df, category, y_feature='SalePrice', Type='average',
                 ranking on
             Type: 
                 'average' would average the values, 
-                'softmax' would perform softmax on the values
-                'plain' would just return the actual values of the averages
                 'norm' returns the normalized version of means
             outlier: given that it is set to True, the outliers in the 
                 y_feature of the dataframe would not be considered
@@ -166,16 +139,10 @@ def rank_categorical_values(df, category, y_feature='SalePrice', Type='average',
     else:
         vals_list = uniques
     
-    # If the data type in the first one is not either na or str then it is a number
-    # And won't need processing
-    if not (pd.isna(vals_list[0]) or type(vals_list[0]) == str):
-        print('Did not need rankking')
-        return {}, False
-    
     unique_categories = stringify_keys(vals_list)
     haveNan = False # Check to see if there is na/nan in unique vales
     
-    # Deleting nans since they are going to be considered seperately
+    # Deleting NaNs since they are going to be considered seperately
     if 'nan' in unique_categories:
         haveNan = True
         i = unique_categories.index('nan')
@@ -194,45 +161,31 @@ def rank_categorical_values(df, category, y_feature='SalePrice', Type='average',
     # Now considering the nan's or the values that were not in any of the unique
     if haveNan:
         na_avg = df.loc[~df[category].isin(unique_categories)][y_feature].mean()
-        means['nan'] = na_avg
+        means[np.nan] = na_avg
         AVG += na_avg
         unique_categories.append('nan')
     
     if Type == 'plain':
-        return means, True
+        return means
     
     for cat in unique_categories:
-        means[cat] /= AVG
-        
-    if Type == 'softmax':
-        return softmax(means), True
-        
-    # IF the Type was not softmax return averages
-    return means, True
-
-
-def impute_rank_weight(col, dic):
-    """
-        Imputes the str values with numbers which are
-        their relative weights.
-        
-        # Arguments:
-            col: a copied version of a slice of the data
-            dic: Dictionary that contains the averages of the 
-                 given unique values in the column
-                 
-        # Returns:
-            decoded column
-    """
-    unique_values = dic.keys()
+        if cat == 'nan':
+            means[np.nan] /= AVG
+        else:
+            means[cat] /= AVG
     
-    for val in unique_values:
-        col.loc[col == val] = dic[val]
+    # IF the Type was not softmax return averages
+    return means
+
+
+def map_categorical_dicts(df, cat_dicts):
+    """ Map the dictionary in the feature of the dataset."""
+    features = list(cat_dicts.keys())
+
+    for feature in features:
+        df[feature] = df[feature].map(cat_dicts[feature])
         
-    if 'nan' in  unique_values:
-        col.loc[pd.isna(col)] = dic['nan']
-        
-    return col.astype(float)
+    return df
 
 
 def encode_categorical(df, features, y_feature='SalePrice', Type='average'):
@@ -247,20 +200,14 @@ def encode_categorical(df, features, y_feature='SalePrice', Type='average'):
         # Returns:
             encoded data
     """
-    # Dictionary containing all the rankings
-    dic = {}
-    dics = {}
     
     for feature in features:
         # get the dictionary of averages
-        feat_dic, change = rank_categorical_values(df, feature, y_feature, Type)
-        # IF the feature did not need any ranking: pass
-        if not change: pass
+        feat_dic = encode_categorical_feature(df, feature, y_feature, Type)
         # Change the values based on their corresponding value
         col = df[feature].copy()
-        df[feature] = impute_rank_weight(col, feat_dic)
-#         print(df[feature])
-    
+        df[feature] = df[feature].map(feat_dic)
+		
     return df
 
 
