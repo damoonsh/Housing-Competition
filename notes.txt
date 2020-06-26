@@ -56,6 +56,9 @@ of averages and the gaussian distribution.
     - use hyperparameter tunning using kerastuner
     - Write a number of different models then validate their accuracy based on
         the validation model, then average the predictions.
+    - A self-critisizing model where it would have some layers and fit, then evaluate
+    	itself and if the evaluation was not good enough add some more layers ot structures
+    	to and redo the whole thing.
 
 # Fixes:
     - rewrite some of the  function in utils(impute using mapping)
