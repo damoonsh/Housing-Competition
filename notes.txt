@@ -45,20 +45,28 @@ of averages and the gaussian distribution.
 
             
 # Implement:
-	- Try out PCA
-    - Implement the class for knn imputation
-    - Implement various combinations of exponents for features
     - a clear pathway to compare the values of bench mark and predicted
-    - impute data using knn and first use the non-missing columns and impute
-        a column then use the newly imputed column to go about 
+    - *impute data using knn and first use the non-missing columns and impute
+        a column then use the newly imputed column to go about imputing
     - impute data by adding the lowest rate error of data to the test y_feat
         then do the imputation
-    - use hyperparameter tunning using kerastuner
+    - use hyperparameter tunning using keras-tuner
     - Write a number of different models then validate their accuracy based on
         the validation model, then average the predictions.
     - A self-critisizing model where it would have some layers and fit, then evaluate
     	itself and if the evaluation was not good enough add some more layers ot structures
     	to and redo the whole thing.
+	- Write a custom loss function the exact same used by the competition marker:
+	
+		def custom_mean_squared_error(y_true, y_pred):
+			return tf.math.reduce_mean(tf.square(y_true - y_pred))
+
+		model = get_uncompiled_model()
+		model.compile(optimizer=keras.optimizers.Adam(), loss=custom_mean_squared_error)
+
+		# We need to one-hot encode the labels to use MSE
+		y_train_one_hot = tf.one_hot(y_train, depth=10)
+		model.fit(x_train, y_train_one_hot, batch_size=64, epochs=1)
 
 # Fixes:
     - rewrite some of the  function in utils(impute using mapping)
