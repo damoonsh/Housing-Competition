@@ -1,4 +1,5 @@
-# house/utils.py: some functions that help and increase the productivity the preprocessing and fitting process
+# house/utils.py: some functions that help and increase the productivity the 
+# preprocessing and fitting process written specific to the housing competition dataset
 import numpy as np
 import pandas as pd
 
@@ -29,12 +30,7 @@ def load_bench_data(file_name, root='./submissions/'):
 
 def retrieve_data():
     """ 
-        Loads train and test datasets and puts into a dictionary and returns 
-        the splitted data based on their relative attributes in a dictionary
-
-        further improvement:
-        The datatypes within data could be identified and then
-        classified based on the available data types
+        Loads train and test datasets and puts into a dictionary and returns the splitted data based on their relative attributes in a dictionary
         
         # Returns:
             dictionary containing info on train and test data
@@ -68,9 +64,18 @@ def retrieve_data():
 
     return dictionary
 
+def combine_train_test(train, test, y_feat='SalePrice'):
+    """ Returns a combined version of the train and test datasets. """
+    train.drop([y_feat], axis=1 , inplace = True) # Drop the dependent column in traininig data
+    feat_cols = train.append(test) # Combine datasets
+    feat_cols.reset_index(inplace=True) # Reset Indexes
+    feat_cols.drop(['index', 'Id'], inplace=True, axis=1) # Drop Id and index columns
+
+    return feat_cols
+
 
 def missing_info(data):
-    """ retuns two dataframes (train, test) defining their relative missing values. """
+    """ Returns two dataframes (train, test) defining their relative missing values. """
     # test data:
     cat_dict = {
         "Test": dict(data['test'][data['test_cat_missing']].isna().sum()), 
@@ -86,8 +91,22 @@ def missing_info(data):
     return pd.DataFrame(cat_dict).fillna(0), pd.DataFrame(num_dict).fillna(0)
 
 
+def validate(y_pred):
+    """ Prints out the data validation with respect to the highest submissions. """
+    from sklearn.metrics import mean_absolute_error as MAE
+    # Import the base_validation substitutionss
+    b012 = load_bench_data(file_name='012008.csv', root='./submissions/')['SalePrice']
+    b011 = load_bench_data(file_name='011978.csv', root='./submissions/')['SalePrice']
+    
+    # Print out the differences
+    print('b011:', int(MAE(b011, y_pred)) / 1000)
+    print('b012:', int(MAE(b012, y_pred)) / 1000)
+    print('-----------------------------------')
+    print('base-differences:', int(MAE(b011, b012)) / 1000)
+
+
 def quantize(values):
-    """ emits the floating point in a list of numbers. """
+    """ Emits the floating point in a list of numbers. """
     modified = [] 
     for num in list(values):
         if num - int(num) >= 0.5:
@@ -111,12 +130,11 @@ def stringify_keys(l):
             l.append(str(item))
     return l
  
-
-def encode_categorical_feature(df, category, y_feature='SalePrice', Type='average', outlier=False, uniques=None):
+# Implement the outliers utility
+def encode_categorical_feature(df, category, y_feature='SalePrice', outlier=False,  include_nan=True):
     """
-        Given that there categorical variables, we 
-        want to have them ranked based on their value
-        
+        Given that there categorical variables, we want to have them ranked based on their value
+
         # Arguments:
             df: Dataframe
             category: the category (feature) to be imputed
@@ -127,17 +145,12 @@ def encode_categorical_feature(df, category, y_feature='SalePrice', Type='averag
                 'norm' returns the normalized version of means
             outlier: given that it is set to True, the outliers in the 
                 y_feature of the dataframe would not be considered
-            uniques: Sending 
             
         # Returns:
             imputed column values with the encoding dictionary
             True if the data needed raking False if not
     """
-    if uniques is None:
-        # Getting the unique values for the column
-        vals_list = list(df[category].unique())
-    else:
-        vals_list = uniques
+    vals_list = list(df[category].unique())
     
     unique_categories = stringify_keys(vals_list)
     haveNan = False # Check to see if there is na/nan in unique vales
@@ -147,11 +160,16 @@ def encode_categorical_feature(df, category, y_feature='SalePrice', Type='averag
         haveNan = True
         i = unique_categories.index('nan')
         unique_categories.pop(i)
-        
+    
     # Dictionary containing mean values of different values in column
     means = {}
+    
     AVG = 0 # Sum of all averages
     
+    if not include_nan:
+        haveNan = False
+        means[np.nan] = 0
+
     # Going through unique values
     for cat in unique_categories:
         cat_avg = df.loc[df[category] == cat][y_feature].mean()
@@ -165,75 +183,39 @@ def encode_categorical_feature(df, category, y_feature='SalePrice', Type='averag
         AVG += na_avg
         unique_categories.append('nan')
     
-    if Type == 'plain':
-        return means
-    
     for cat in unique_categories:
         if cat == 'nan':
-            means[np.nan] /= AVG
+            means[np.nan] = round(means[np.nan] / AVG, 4)
         else:
-            means[cat] /= AVG
+            means[cat] = round(means[cat] / AVG, 4)
     
     # IF the Type was not softmax return averages
     return means
 
-
-def map_categorical_dicts(df, cat_dicts):
-    """ Map the dictionary in the feature of the dataset."""
-    features = list(cat_dicts.keys())
-
+# Implement: give a list of features which have more than 10% missing data but we still want to include them
+def get_encoding_dicts(df, features):
+    """ Returns the dictionary containing the encoded values for each unique value inside the categorical columns. """
+    cat_dicts = {}
+    len_df = df.shape[0]
+    
     for feature in features:
+        if df[feature].isna().sum() / len_df < 0.1:
+            cat_dicts[feature] = encode_categorical_feature(df, feature)
+        else:
+            print('Ignoring:', feature)
+            cat_dicts[feature] = encode_categorical_feature(df, feature, include_nan=False)
+    
+    return cat_dicts
+
+
+def encode_categorical(df, cat_dicts):
+    """ Encodes the dataframe's categorical features by mapping them to their relative dictionary values. """
+    
+    for feature in cat_dicts.keys():
         df[feature] = df[feature].map(cat_dicts[feature])
-        
-    return df
-
-
-def encode_categorical(df, features, y_feature='SalePrice', Type='average'):
-    """
-        Encodes the dataframe's categorical features 
-    
-        # Argument:
-            df: Dataframe (NOTE: pass df.copy() for explicit mutation)
-            featrues: Categorical features to be encoded
-            y_feature: independent data used base our measures on
-            
-        # Returns:
-            encoded data
-    """
-    
-    for feature in features:
-        # get the dictionary of averages
-        feat_dic = encode_categorical_feature(df, feature, y_feature, Type)
-        # Change the values based on their corresponding value
-        col = df[feature].copy()
-        df[feature] = df[feature].map(feat_dic)
-		
-    return df
-
-
-def emit_outliers(df, feature):
-    """
-        Deletes the outliers in a column so the modeling would be 
-        more accurate.
-        
-        # Arguments:
-            df: Dataframe
-            feature: feature that is to be inspected
-        
-        # Returns:
-            A dataframe with deleted outliers
-    """
-    q1 = df[feature].quntile(0.25)
-    q2 = df[feature].quntile(0.5)
-    q3 = df[feature].quntile(0.75)
-    iqr = q3 - q1
-    upper_bound = q1 - 1.5 * iqr
-    lower_bound = q3 + 1.5 * iqr
-    
-    df[feature] = df[feature][df[feature] < upper_bound]
-    df[feature] = df[feature][df[feature] < lower_bound]
     
     return df
+
 
 def normalize(col, Type='std'):
     """
