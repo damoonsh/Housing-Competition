@@ -45,7 +45,7 @@ of averages and the gaussian distribution.
 
             
 # Implement:
-    - a clear pathway to compare the values of bench mark and predicted
+    - Start making different neural network models which have a specific architecture and have fine tuned, get your head around keras-tuner, after making models with different architectures and finding the tuned hyperparameters for them then average their predictions.
     - *impute data using knn and first use the non-missing columns and impute
         a column then use the newly imputed column to go about imputing
     - impute data by adding the lowest rate error of data to the test y_feat
