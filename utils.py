@@ -219,7 +219,7 @@ def encode_categorical(df, cat_dicts):
 
 def normalize(col, Type='std'):
     """
-        Normalizes the 
+        Normalizes the given column of data
         
         # Arguments:
             col: column of data

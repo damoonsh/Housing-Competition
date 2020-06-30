@@ -68,6 +68,9 @@ of averages and the gaussian distribution.
 		y_train_one_hot = tf.one_hot(y_train, depth=10)
 		model.fit(x_train, y_train_one_hot, batch_size=64, epochs=1)
 
+# Agenda:
+	- Try out different tweaks, normalized version of x wroks really well
+
 # Fixes:
-    - rewrite some of the  function in utils(impute using mapping)
-    - in dicts instead of 'nan' put np.nan then use mapping
+    - 
+	
