@@ -94,15 +94,24 @@ def missing_info(data):
 def validate(y_pred):
     """ Prints out the data validation with respect to the highest submissions. """
     from sklearn.metrics import mean_absolute_error as MAE
-    # Import the base_validation substitutionss
+    from sklearn.metrics import mean_squared_log_error as MSLE
+    # Import the base_validation submititions
     b012 = load_bench_data(file_name='012008.csv', root='./submissions/')['SalePrice']
     b011 = load_bench_data(file_name='011978.csv', root='./submissions/')['SalePrice']
     
     # Print out the differences
+    print('MAEs:')
     print('b011:', int(MAE(b011, y_pred)) / 1000)
     print('b012:', int(MAE(b012, y_pred)) / 1000)
     print('-----------------------------------')
     print('base-differences:', int(MAE(b011, b012)) / 1000)
+    print('###############################################')
+    print('Lograithmic Error:')
+    print('MSLE:')
+    print('b011:', MSLE(b011, y_pred))
+    print('b012:', MSLE(b012, y_pred))
+    print('-----------------------------------')
+    print('base-differences:', MSLE(b011, b012))
 
 
 def quantize(values):
