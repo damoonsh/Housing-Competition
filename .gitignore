@@ -2,10 +2,4 @@
 .idea/
 .vscode/
 __pycache__/
-tut/
-FeatureFinder.py
-FeatureSelection.py
-c0.csv
-c1.csv
-c2.csv
-utilsTester.py
+models/
