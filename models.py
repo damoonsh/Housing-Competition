@@ -95,12 +95,141 @@ from tensorflow.keras.regularizers import l2, l1, l1_l2, L1L2  # Regularizer
 from tensorflow.keras.losses import MeanSquaredLogarithmicError # Error-metric
 import tensorflow_docs as tfdocs # For logging puposes
 
-def Model01(config):
-	"""
-		# params: 
-			config: uses the configuration dictionary to compile and fit the model accordingly
-			
-		# returns a history object when the fitting is done
-	"""
-	pass
+
+# This model still needs some modifiations
+def NN01():
+    """
+        The architecture of this model consists of three batches of three Dense layers where:
+            - The layer in between is linear and does not have an activation function, the other
+                two layers have the relu activation function. The number of layer in between is four times
+                the number of its sourounding layers.
+            - The regularazation term for the middle layer is both higher and uses the l2 for its weights.
+                There is more bias being introduced in the middle layer as well, the weights have a higher range
+                in the midddle layer.
+            - Added BatchNormalization layer after each three batches(testing phase).
+            - The last three layers will be highly biased with high regualarization terms
+    """
+    model = keras.Sequential([
+        InputLayer(input_shape=[len(X.keys())]),
+        
+        Dense(64, activation='elu', 
+              kernel_regularizer=l1(0.001),
+              bias_regularizer=l2(0.001),
+              bias_initializer=TruncatedNormal(mean=0, stddev=0.005),
+              kernel_initializer=TruncatedNormal(mean=0, stddev=25)
+        ),
+        Dense(256, 
+              kernel_regularizer=l2(0.01),
+              bias_regularizer=l1(0.01),
+              bias_initializer=TruncatedNormal(mean=0, stddev=0.5),
+              kernel_initializer=TruncatedNormal(mean=0, stddev=5)
+        ),
+        BatchNormalization(),
+        Dense(64, activation='elu',
+              bias_regularizer=l1(0.001), 
+              kernel_regularizer=l2(0.001),
+              bias_initializer=TruncatedNormal(mean=0, stddev=0.005),
+              kernel_initializer=TruncatedNormal(mean=0, stddev=25)
+        ),
+        
+        BatchNormalization(),
+        Dense(128, activation = 'relu', 
+              bias_regularizer=l1(0.001), 
+              kernel_regularizer=l1(0.001),
+              bias_initializer=TruncatedNormal(mean=0, stddev=1.5),
+              kernel_initializer=TruncatedNormal(mean=0, stddev=1)
+        ),
+        Dense(512, 
+              kernel_regularizer=l2(0.01),
+              bias_regularizer=l1(0.01), 
+              bias_initializer=TruncatedNormal(mean=0, stddev=1.5),
+              kernel_initializer=TruncatedNormal(mean=0, stddev=5)
+        ),
+        BatchNormalization(),
+        Dense(128, activation = 'elu',
+              kernel_regularizer=l2(0.01),
+              bias_regularizer=l1(0.001), 
+              bias_initializer=TruncatedNormal(mean=0, stddev=1),
+              kernel_initializer=TruncatedNormal(mean=0, stddev=1)
+        ),
+        
+        BatchNormalization(),
+        Dense(8,  activation = 'elu',
+              kernel_regularizer=l1(0.001),
+              bias_regularizer=l1(0.001),
+              bias_initializer=TruncatedNormal(mean=0, stddev=1),
+              kernel_initializer=TruncatedNormal(mean=0, stddev=1.75)
+        ),
+        Dense(32,
+              kernel_regularizer=l2(0.01), 
+              bias_regularizer=l1(0.01), 
+              bias_initializer=TruncatedNormal(mean=0, stddev=1.5),
+              kernel_initializer=TruncatedNormal(mean=0, stddev=4)  
+        ),
+    
+        BatchNormalization(),
+        Dense(8, activation = 'elu',
+              kernel_regularizer=l1(0.001),
+              bias_regularizer=l1(0.001),
+              bias_initializer=TruncatedNormal(mean=0, stddev=1),
+              kernel_initializer=TruncatedNormal(mean=0, stddev=1.75)
+        ),
+        
+        BatchNormalization(),
+        Dense(128, 
+              activation = 'elu',
+              kernel_regularizer=l1(0.001),
+              bias_regularizer=l1(0.001),
+              bias_initializer=TruncatedNormal(mean=0, stddev=1.8),
+              kernel_initializer=TruncatedNormal(mean=0, stddev=2.5)
+        ),
+        Dense(1024, 
+              kernel_regularizer=l2(0.01), 
+              bias_regularizer=l1(0.01), 
+              bias_initializer=TruncatedNormal(mean=0, stddev=0.5),
+              kernel_initializer=TruncatedNormal(mean=0, stddev=6)
+        ),
+        Dropout(0.5),
+        
+        BatchNormalization(),
+        Dense(128, 
+              activation = 'elu', 
+              bias_regularizer=l1(0.001),
+              bias_initializer=TruncatedNormal(mean=0, stddev=1.8),
+              kernel_initializer=TruncatedNormal(mean=0, stddev=2.5),
+              kernel_regularizer=l2(0.001)
+        ),
+        
+        Dense(4, 
+              kernel_regularizer=L1L2(0.04, 0.04), 
+              bias_regularizer=l2(0.01), 
+              bias_initializer=TruncatedNormal(mean=0, stddev=5), 
+              kernel_initializer=TruncatedNormal(mean=0, stddev=2.5)
+        ),
+        Dense(4, 
+              kernel_regularizer=L1L2(0.05, 0.05), 
+              bias_regularizer=l2(0.1), 
+              bias_initializer=TruncatedNormal(mean=0, stddev=0.05), 
+              kernel_initializer=TruncatedNormal(mean=0, stddev=4)
+        ),
+        Dense(4, 
+              kernel_regularizer=L1L2(0.6, 0.6), 
+              bias_regularizer=l2(0.2), 
+              bias_initializer=TruncatedNormal(mean=0, stddev=5), 
+              kernel_initializer=TruncatedNormal(mean=0, stddev=2.5)
+        ),
+        
+        Dense(1)
+      ])
+    
+    time_lr = TimeDecayScheduler(learning_rate=0.018, decay_steps=500, decay_rate=0.35, name="")
+    
+    optimizer = Adam(time_lr)
+        
+    model.compile(
+        loss=MeanSquaredLogarithmicError(name='MSLE'), 
+        optimizer=optimizer, 
+    )
+  
+    return model
 	
