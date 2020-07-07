@@ -1,76 +1,13 @@
-Data preprocessing:
-
-	General strategy: 
-		Using features that are not missing*[1] to impute the missing data with 
-		an algorithm. 
-
-		NOTE[1]: Given that there are small fraction of missing values in the a feature
-		, we can first impute that by filling it with mean or mode.
-        
-        - encoding:
-            first get the average for a given unique value
-            then get the z-score for any of the salePrice values
-            in the row and multiply it by the portion related to other averages
-        
-		K-means clustering:
-			x1, x2, x3, x4, x5 are the features where x5 has missing values
-			now there is going to be a k-means ran on each of the features x1-4
-			hence each data point in each feature will be assigned a group and we 
-			are interested in that group's average. Then in order to predict the
-			value of the missing data, each feature will have a weight and a linear
-			-wise calculation will indicate the missing value:
-			1. Running k-means on each x1-4 feature (non-missing) and obtaining
-			   each of their averages.
-			2. Going over the missing value point where x5(i) is missing but we have
-			   x1-4(i) values, and we also know the features correlation with each other
-			   (with .corr() functionality) which will be called w15,w25,w35,w45 then we
-			   know the average of each group that each data point features are in g1,g2,
-			   g3,g4, hence: x5(i) = w15 * g1 + ... + w45 * g4
-
-			   g denotes the average of that cluster,
-			   w denotes weights where w15 = rel15 / (rel15 + ... + rel45)
-
-		After merging the train and test dataset then 
-
-		KNN:
-			This procedure is relied on the y (independent) feature, where
-			the dataframe is broken into dataframes with indexes with na's and
-			non-nas, then the knn algorithm is ran on it.
-            
-
-Add one of the highest predictions to test set and then try to impute the whole data
-with each of those SalePrices. 
-Note: this is for the case where trying to encode categorical data using both portion
-of averages and the gaussian distribution.
-
-            
 # Implement:
-    - Start making different neural network models which have a specific architecture and have fine tuned, get your head around keras-tuner, after making models with different architectures and finding the tuned hyperparameters for them then average their predictions.
-    - *impute data using knn and first use the non-missing columns and impute
-        a column then use the newly imputed column to go about imputing
-    - impute data by adding the lowest rate error of data to the test y_feat
-        then do the imputation
+    - Start making different neural network models which have a specific architecture and are fine tuned, get your head around keras-tuner, after making models with different architectures and finding the tuned hyperparameters for them then average their predictions.
     - use hyperparameter tunning using keras-tuner
-    - Write a number of different models then validate their accuracy based on
-        the validation model, then average the predictions.
-    - A self-critisizing model where it would have some layers and fit, then evaluate
-    	itself and if the evaluation was not good enough add some more layers ot structures
-    	to and redo the whole thing.
-	- Write a custom loss function the exact same used by the competition marker:
+    - Write a number of different models then validate their accuracy based on the validation model, then average the predictions. The workflow: come up with a neural network and find the hyperparameters for it, then if it had a relatively low error rate then save the model with the convention <model-name><error> in the models folder.
 	
-		def custom_mean_squared_error(y_true, y_pred):
-			return tf.math.reduce_mean(tf.square(y_true - y_pred))
-
-		model = get_uncompiled_model()
-		model.compile(optimizer=keras.optimizers.Adam(), loss=custom_mean_squared_error)
-
-		# We need to one-hot encode the labels to use MSE
-		y_train_one_hot = tf.one_hot(y_train, depth=10)
-		model.fit(x_train, y_train_one_hot, batch_size=64, epochs=1)
-
+	- Try to find the most suitable parameters for the inverseTimeDecay scheduler.
+	
+	
 # Agenda:
-	- Try out different tweaks, normalized version of x wroks really well
+	- Try out different tweaks, normalized version of x works really well yet it is not recommended to use a normalized x and a non-normalized y.
+
 
 # Fixes:
-    - 
-	

@@ -21,7 +21,10 @@
 	Note02: tanh does not happen to work as well as elu and relu, on a broader perspective relu is 
 		most appropriate one for the regression.
 """
-
+# Important the main tensorflow library
+import tensorflow as tf
+# This line should be written so all the values inside of each layer is calculated as a float64
+tf.keras.backend.set_floatx('float64')
 
 # Scheduler objects to control the optimizer learning rate:
 from tensorflow.keras.optimizers.schedules import InverseTimeDecay, ExponentialDecay
