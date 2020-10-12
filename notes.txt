@@ -8,6 +8,5 @@
 	
 # Agenda:
 	- Try out different tweaks, normalized version of x works really well yet it is not recommended to use a normalized x and a non-normalized y.
-
-
-# Fixes:
+    - Try different models, save the results, subtract the result and find the indices with high difference, try to understand why they are so
+    different and then make assumptions on their features.
